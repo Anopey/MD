@@ -113,6 +113,7 @@ var tendedPlayers = make([]*player, 0, 50)
 
 //tendToClientRead handles all the reading operations relating to a specific client
 func tendToClientRead(p *player, scanner *bufio.Scanner) {
+	p.lastMsgRecieve = time.Now() //so no timeout occurs immediately
 	tendedPlayers = append(tendedPlayers, p)
 	for scanner.Scan() && p.active && serverActive {
 		p.m.Lock()
@@ -142,7 +143,7 @@ func tendToClientChannels(p *player, scanner *bufio.Scanner) {
 			fmt.Fprint(conn, w.message)
 			break
 		case <-p.disconnectClientChannel:
-			fmt.Println("disconnecting through channel " + p.name)
+			fmt.Println("disconnecting through channel: " + p.name)
 			fmt.Fprint(*p.conn, "MD CLOSE\n")
 			disconnectAndRemoveClient(p)
 			conn.Close()
