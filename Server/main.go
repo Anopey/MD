@@ -79,8 +79,8 @@ func handleGameConnection(conn *net.Conn) {
 	}
 	//ok player is created and has connection
 	fmt.Fprint(*conn, "MD OK\n")
-	tendToClientRead(p, scanner)
 	go tendToClientChannels(p, scanner)
+	tendToClientRead(p, scanner)
 }
 
 func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
@@ -117,6 +117,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	for scanner.Scan() && p.active && serverActive {
 		p.m.Lock()
 		ln := scanner.Text()
+		fmt.Println(p.name + ": " + ln)
 		p.lastMsgRecieve = time.Now()
 		switch ln {
 		case "MD CLOSE\n":
@@ -146,6 +147,7 @@ func tendToClientChannels(p *player, scanner *bufio.Scanner) {
 			return
 		}
 		p.m.Unlock()
+		fmt.Println("unlocked!")
 	}
 }
 
