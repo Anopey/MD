@@ -158,7 +158,6 @@ func tendToClientChannels(p *player, scanner *bufio.Scanner) {
 			return
 		}
 		p.m.Unlock()
-		fmt.Println("unlocked!")
 	}
 }
 
@@ -181,7 +180,6 @@ func timeoutRoutine() {
 				toRemove = append(toRemove, v)
 				continue
 			}
-			fmt.Println(v.name + " reee")
 			v.writeChannel <- &writeRequest{
 				message: "MD NO TIMEOUT\n",
 			}
