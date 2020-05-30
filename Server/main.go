@@ -29,6 +29,7 @@ type player struct {
 	writeChannel            chan *writeRequest
 	disconnectClientChannel chan interface{}
 	m                       sync.RWMutex
+	tendedPlayersIndex      int
 }
 
 type game struct {
@@ -115,8 +116,12 @@ var tendedPlayers = make([]*player, 0, 50)
 func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	p.lastMsgRecieve = time.Now() //so no timeout occurs immediately
 	tendedPlayers = append(tendedPlayers, p)
+	p.tendedPlayersIndex = len(tendedPlayers) - 1
 	for scanner.Scan() && p.active && serverActive {
 		p.m.Lock()
+		if !p.active {
+			return
+		}
 		ln := scanner.Text()
 		fmt.Println(p.name + ": " + ln)
 		p.lastMsgRecieve = time.Now()
@@ -138,6 +143,9 @@ func tendToClientChannels(p *player, scanner *bufio.Scanner) {
 	conn := *p.conn
 	for p.active && serverActive {
 		p.m.Lock()
+		if !p.active {
+			return
+		}
 		select {
 		case w := <-p.writeChannel:
 			fmt.Fprint(conn, w.message)
@@ -157,6 +165,11 @@ func tendToClientChannels(p *player, scanner *bufio.Scanner) {
 func disconnectAndRemoveClient(p *player) {
 	//deal with all that is necessary here, such as removing from tended etc.
 
+	//remove from tended players
+	tendedPlayers[p.tendedPlayersIndex] = tendedPlayers[len(tendedPlayers)-1]
+	tendedPlayers[len(tendedPlayers)-1] = nil
+	tendedPlayers = tendedPlayers[:len(tendedPlayers)-1]
+	p.active = false
 }
 
 func timeoutRoutine() {
