@@ -13,14 +13,20 @@ type queueType int
 const (
 	codeBased queueType = 0
 	free      queueType = 1
+
+	timeOutMessagesSendTimeSecond time.Duration = time.Second * 5
 )
 
 type player struct {
-	conn        *net.Conn
-	name        string
-	activeQueue *queue
-	activeGame  *game
-	id          int64
+	conn                    *net.Conn
+	name                    string
+	activeQueue             *queue
+	activeGame              *game
+	lastMsgRecieve          time.Time
+	active                  bool
+	id                      int64
+	writeChannel            chan *writeRequest
+	disconnectClientChannel chan interface{}
 }
 
 type game struct {
@@ -34,6 +40,7 @@ type queue struct {
 }
 
 var lastID int64 = 0
+var serverActive bool = false
 
 func main() {
 	li, err := net.Listen("tcp", ":52515")
@@ -43,7 +50,11 @@ func main() {
 
 	fmt.Println("Now listening on port 52515...")
 
+	serverActive = true
+
 	go gameServer()
+	go delegateChannels()
+	go timeoutRoutine()
 
 	for {
 		conn, err := li.Accept()
@@ -52,7 +63,6 @@ func main() {
 		}
 		fmt.Println("New connection from " + conn.RemoteAddr().String())
 		go handleGameConnection(&conn)
-
 	}
 }
 
@@ -67,6 +77,7 @@ func handleGameConnection(conn *net.Conn) {
 	}
 	//ok player is created and has connection
 	fmt.Fprint(*conn, "MD OK\n")
+	tendToClient(p, scanner)
 }
 
 func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
@@ -83,10 +94,93 @@ func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
 	}
 	fmt.Println(time.Now().Format("2006-01-02 15:04:05") + ": " + "****NEW PLAYER: " + (*conn).RemoteAddr().String() + " " + fields[1])
 	var newPlayer = player{
-		conn: conn,
-		name: fields[1],
-		id:   lastID,
+		conn:                    conn,
+		name:                    fields[1],
+		id:                      lastID,
+		active:                  true,
+		writeChannel:            make(chan *writeRequest, 5),
+		disconnectClientChannel: make(chan interface{}, 5),
 	}
 	lastID++
 	return &newPlayer
+}
+
+var tendedPlayers = make([]*player, 50)
+
+//tendToClient handles all the reading and writing operations relating to a specific client
+func tendToClient(p *player, scanner *bufio.Scanner) {
+	conn := *p.conn
+	tendedPlayers = append(tendedPlayers, p)
+	for scanner.Scan() && p.active {
+		ln := scanner.Text()
+		p.lastMsgRecieve = time.Now()
+		switch ln {
+		case "MD CLOSE\n":
+			//handle this player being no more.
+			disconnectAndRemoveClient(p)
+			fmt.Fprint(*p.conn, "MD CLOSE\n")
+			goto closePlayer
+		case "MD NO TIMEOUT\n":
+			break
+		}
+
+		select {
+		case w := <-p.writeChannel:
+			fmt.Fprint(*p.conn, w.message)
+			break
+		case <-p.disconnectClientChannel:
+			fmt.Fprint(*p.conn, "MD CLOSE\n")
+			disconnectAndRemoveClient(p)
+			goto closePlayer
+		}
+	}
+closePlayer:
+	defer conn.Close()
+}
+
+func disconnectAndRemoveClient(p *player) {
+	//deal with all that is necessary here, such as removing from tended etc.
+
+}
+
+func timeoutRoutine() {
+	for serverActive {
+		time.Sleep(timeOutMessagesSendTimeSecond)
+		toRemove := make([]*player, 50)
+		for _, v := range tendedPlayers {
+			if v.lastMsgRecieve.Add(timeOutMessagesSendTimeSecond * 3).Before(time.Now()) {
+				toRemove = append(toRemove, v)
+				continue
+			}
+			v.writeChannel <- &writeRequest{
+				message: "MD NO TIMEOUT\n",
+			}
+		}
+
+		//now for removal
+		for _, v := range toRemove {
+			v.disconnectClientChannel <- struct{}{}
+		}
+	}
+}
+
+//serverCloseChannel is called when server should close.
+var serverCloseChannel = make(chan interface{})
+
+func delegateChannels() {
+	for serverActive {
+		select {
+		case <-serverCloseChannel:
+
+			break
+		}
+	}
+}
+
+type writeRequest struct {
+	message string
+}
+
+func handleWriteRequest(conn *net.Conn, req *writeRequest) {
+	fmt.Fprint(*conn, req.message)
 }
