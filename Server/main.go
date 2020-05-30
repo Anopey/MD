@@ -127,6 +127,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 		}
 		p.m.Unlock()
 	}
+	p.disconnectClientChannel <- struct{}{}
 }
 
 //tendToClientChannels ensures that only one routine per client can tend to the players' channels, such as writing
