@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -27,6 +28,7 @@ type player struct {
 	id                      int64
 	writeChannel            chan *writeRequest
 	disconnectClientChannel chan interface{}
+	m                       sync.RWMutex
 }
 
 type game struct {
@@ -77,7 +79,8 @@ func handleGameConnection(conn *net.Conn) {
 	}
 	//ok player is created and has connection
 	fmt.Fprint(*conn, "MD OK\n")
-	tendToClient(p, scanner)
+	tendToClientRead(p, scanner)
+	tendToClientChannels(p, scanner)
 }
 
 func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
@@ -100,6 +103,7 @@ func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
 		active:                  true,
 		writeChannel:            make(chan *writeRequest, 5),
 		disconnectClientChannel: make(chan interface{}, 5),
+		m:                       sync.RWMutex{},
 	}
 	lastID++
 	return &newPlayer
@@ -107,35 +111,41 @@ func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
 
 var tendedPlayers = make([]*player, 0, 50)
 
-//tendToClient handles all the reading and writing operations relating to a specific client
-func tendToClient(p *player, scanner *bufio.Scanner) {
-	conn := *p.conn
+//tendToClientRead handles all the reading operations relating to a specific client
+func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	tendedPlayers = append(tendedPlayers, p)
-	for scanner.Scan() && p.active {
+	for scanner.Scan() && p.active && serverActive {
+		p.m.Lock()
 		ln := scanner.Text()
 		p.lastMsgRecieve = time.Now()
 		switch ln {
 		case "MD CLOSE\n":
 			//handle this player being no more.
-			disconnectAndRemoveClient(p)
-			fmt.Fprint(*p.conn, "MD CLOSE\n")
-			goto closePlayer
+			p.disconnectClientChannel <- struct{}{}
 		case "MD NO TIMEOUT\n":
 			break
 		}
+		p.m.Unlock()
+	}
+}
 
+//tendToClientChannels ensures that only one routine per client can tend to the players' channels, such as writing
+func tendToClientChannels(p *player, scanner *bufio.Scanner) {
+	conn := *p.conn
+	for p.active && serverActive {
+		p.m.Lock()
 		select {
 		case w := <-p.writeChannel:
-			fmt.Fprint(*p.conn, w.message)
+			fmt.Fprint(conn, w.message)
 			break
 		case <-p.disconnectClientChannel:
 			fmt.Fprint(*p.conn, "MD CLOSE\n")
 			disconnectAndRemoveClient(p)
-			goto closePlayer
+			conn.Close()
+			return
 		}
+		p.m.Unlock()
 	}
-closePlayer:
-	defer conn.Close()
 }
 
 func disconnectAndRemoveClient(p *player) {
