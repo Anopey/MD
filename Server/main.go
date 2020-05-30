@@ -105,7 +105,7 @@ func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
 	return &newPlayer
 }
 
-var tendedPlayers = make([]*player, 50)
+var tendedPlayers = make([]*player, 0, 50)
 
 //tendToClient handles all the reading and writing operations relating to a specific client
 func tendToClient(p *player, scanner *bufio.Scanner) {
@@ -146,7 +146,7 @@ func disconnectAndRemoveClient(p *player) {
 func timeoutRoutine() {
 	for serverActive {
 		time.Sleep(timeOutMessagesSendTimeSecond)
-		toRemove := make([]*player, 50)
+		toRemove := make([]*player, 0, len(tendedPlayers)/10)
 		for _, v := range tendedPlayers {
 			if v.lastMsgRecieve.Add(timeOutMessagesSendTimeSecond * 3).Before(time.Now()) {
 				toRemove = append(toRemove, v)
