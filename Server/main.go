@@ -72,6 +72,7 @@ func handleGameConnection(conn *net.Conn) {
 }
 
 func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
+	fmt.Println("handling initial player connection...")
 	for scanner.Scan() {
 		fields, flag := parseUtilsAndSignal(scanner.Text(), 2)
 		fmt.Println(fields)
