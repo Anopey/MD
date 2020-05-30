@@ -128,6 +128,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 		}
 		p.m.Unlock()
 	}
+	fmt.Println("disconnecting " + p.name)
 	p.disconnectClientChannel <- struct{}{}
 }
 
@@ -141,6 +142,7 @@ func tendToClientChannels(p *player, scanner *bufio.Scanner) {
 			fmt.Fprint(conn, w.message)
 			break
 		case <-p.disconnectClientChannel:
+			fmt.Println("disconnecting through channel " + p.name)
 			fmt.Fprint(*p.conn, "MD CLOSE\n")
 			disconnectAndRemoveClient(p)
 			conn.Close()
