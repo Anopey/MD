@@ -55,11 +55,6 @@ func main() {
 
 func handleGameConnection(conn *net.Conn) {
 	scanner := bufio.NewScanner(*conn)
-	if !scanner.Scan() {
-		fmt.Println("Empty connection request detected.")
-		(*conn).Close()
-		return
-	}
 	p := handleInitialConnection(conn, scanner)
 	if p == nil {
 		fmt.Println(time.Now().Format("2006-01-02 15:04:05") + ": " + "INVALID REQUEST FROM: " + (*conn).RemoteAddr().String())
