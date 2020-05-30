@@ -68,18 +68,20 @@ func handleGameConnection(conn *net.Conn) {
 
 func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
 	fmt.Println("handling initial player connection...")
-	for scanner.Scan() {
-		fields, flag := parseUtilsAndSignal(scanner.Text(), 2)
-		fmt.Println(fields)
-		if flag != ok {
-			return nil
-		}
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05") + ": " + "****NEW PLAYER: " + (*conn).RemoteAddr().String() + " " + fields[1])
-		var newPlayer = player{
-			conn: conn,
-			name: fields[1],
-		}
-		return &newPlayer
+	if !(*scanner).Scan() {
+		fmt.Println("Empty connection request detected.")
+		(*conn).Close()
+		return nil
 	}
-	return nil
+	fields, flag := parseUtilsAndSignal((*scanner).Text(), 2)
+	fmt.Println(fields)
+	if flag != ok {
+		return nil
+	}
+	fmt.Println(time.Now().Format("2006-01-02 15:04:05") + ": " + "****NEW PLAYER: " + (*conn).RemoteAddr().String() + " " + fields[1])
+	var newPlayer = player{
+		conn: conn,
+		name: fields[1],
+	}
+	return &newPlayer
 }
