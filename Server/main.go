@@ -80,7 +80,7 @@ func handleGameConnection(conn *net.Conn) {
 	//ok player is created and has connection
 	fmt.Fprint(*conn, "MD OK\n")
 	tendToClientRead(p, scanner)
-	tendToClientChannels(p, scanner)
+	go tendToClientChannels(p, scanner)
 }
 
 func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
