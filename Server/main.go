@@ -20,6 +20,7 @@ type player struct {
 	name        string
 	activeQueue *queue
 	activeGame  *game
+	id          int64
 }
 
 type game struct {
@@ -31,6 +32,8 @@ type game struct {
 type queue struct {
 	qType queueType
 }
+
+var lastID int64 = 0
 
 func main() {
 	li, err := net.Listen("tcp", ":52515")
@@ -82,6 +85,8 @@ func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
 	var newPlayer = player{
 		conn: conn,
 		name: fields[1],
+		id:   lastID,
 	}
+	lastID++
 	return &newPlayer
 }
