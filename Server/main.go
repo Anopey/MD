@@ -58,12 +58,12 @@ func handleGameConnection(conn *net.Conn) {
 	p := handleInitialConnection(conn, scanner)
 	if p == nil {
 		fmt.Println(time.Now().Format("2006-01-02 15:04:05") + ": " + "INVALID REQUEST FROM: " + (*conn).RemoteAddr().String())
-		fmt.Fprint(*conn, "MD INVALID") //HOW DARE YOU NOT USE THE MD PROTOCOL. DAMN HTTP NERDS
+		fmt.Fprint(*conn, "MD INVALID\n") //HOW DARE YOU NOT USE THE MD PROTOCOL. DAMN HTTP NERDS
 		(*conn).Close()
 		return
 	}
 	//ok player is created and has connection
-	fmt.Fprint(*conn, "MD OK")
+	fmt.Fprint(*conn, "MD OK\n")
 }
 
 func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
