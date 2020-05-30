@@ -162,7 +162,7 @@ func timeoutRoutine() {
 				toRemove = append(toRemove, v)
 				continue
 			}
-			fmt.Fprintln(v.name + " reee")
+			fmt.Println(v.name + " reee")
 			v.writeChannel <- &writeRequest{
 				message: "MD NO TIMEOUT\n",
 			}
