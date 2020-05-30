@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strings"
 	"time"
 )
 
@@ -64,7 +63,7 @@ func handleGameConnection(conn *net.Conn) {
 	p := handleInitialConnection(conn, scanner)
 	if p == nil {
 		fmt.Println(time.Now().Format("2006-01-02 15:04:05") + ": " + "INVALID REQUEST FROM: " + (*conn).RemoteAddr().String())
-		fmt.Fprint(*conn, "!MD") //HOW DARE YOU NOT USE THE MD PROTOCOL. DAMN HTTP NERDS
+		fmt.Fprint(*conn, "MD INVALID") //HOW DARE YOU NOT USE THE MD PROTOCOL. DAMN HTTP NERDS
 		(*conn).Close()
 		return
 	}
@@ -73,8 +72,8 @@ func handleGameConnection(conn *net.Conn) {
 }
 
 func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
-	fields := strings.Fields(scanner.Text())
-	if len(fields) != 2 && fields[0] != "MD" {
+	fields, flag := parseUtilsAndSignal(scanner.Text(), 2)
+	if flag != ok {
 		return nil
 	}
 	fmt.Println(time.Now().Format("2006-01-02 15:04:05") + ": " + "****NEW PLAYER: " + (*conn).RemoteAddr().String() + " " + fields[1])
