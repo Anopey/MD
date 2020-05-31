@@ -239,6 +239,7 @@ func timeoutRoutine() {
 			p.writeChannel <- &writeRequest{
 				message: "MD NO TIMEOUT\n",
 			}
+			ele = ele.Next()
 		}
 		tendedPlayersMutex.RUnlock()
 
