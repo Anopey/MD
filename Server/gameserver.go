@@ -139,10 +139,10 @@ func gameTempoProcess(g *game) {
 		fmt.Println(fmt.Sprintf("%f", g.p2Pos) + " " + fmt.Sprintf("%f", currentPos) + " " + fmt.Sprintf("%f", g.p1Pos))
 		if (g.p1Pos < currentPos && g.p2Pos < currentPos) || (g.p1Pos > currentPos && g.p2Pos > currentPos) {
 			g.p1.writeChannel <- &writeRequest{
-				message: "MD GAME-FAIL",
+				message: "MD GAME-FAIL\n",
 			}
 			g.p2.writeChannel <- &writeRequest{
-				message: "MD GAME-FAIL",
+				message: "MD GAME-FAIL\n",
 			}
 			g.p1.activeGame = nil
 			g.p2.activeGame = nil
