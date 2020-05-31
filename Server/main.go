@@ -247,6 +247,7 @@ func timeoutRoutine() {
 		fmt.Println("tended players read for timeout routine.")
 		//now for removal
 		for _, v := range toRemove {
+			fmt.Println("sending timeout channel req to: " + v.name)
 			v.disconnectClientChannel <- struct{}{}
 		}
 	}
