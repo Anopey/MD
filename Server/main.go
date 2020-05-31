@@ -187,7 +187,6 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 func tendToClientChannels(p *player) {
 	conn := *p.conn
 	for p.active && serverActive {
-		p.m.Lock()
 		if !p.active {
 			return
 		}
@@ -196,13 +195,15 @@ func tendToClientChannels(p *player) {
 			fmt.Fprint(conn, w.message)
 			break
 		case <-p.disconnectClientChannel:
+			p.m.Lock()
 			fmt.Println("disconnecting through channel: " + p.name)
 			fmt.Fprint(*p.conn, "MD CLOSE\n")
 			disconnectAndRemoveClient(p)
 			conn.Close()
+			p.m.Unlock()
+
 			return
 		}
-		p.m.Unlock()
 	}
 }
 
