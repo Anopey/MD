@@ -123,14 +123,14 @@ func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
 
 var tendedPlayers *list.List = list.New()
 
-var tendedPlayersMutex sync.RWMutex = sync.RWMutex{}
+var tendedPlayersMutex sync.RWMutex = sync.RWMutex{} //maybe try pointer instead?
 
 //tendToClientRead handles all the reading operations relating to a specific client
 func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	p.lastMsgRecieve = time.Now() //so no timeout occurs immediately
-	tendedPlayersMutex.Lock()
+	//tendedPlayersMutex.Lock()
 	p.tendedPlayersElement = tendedPlayers.PushBack(p)
-	tendedPlayersMutex.Unlock()
+	//tendedPlayersMutex.Unlock()
 	fmt.Println("added to tended players: " + p.name)
 	for scanner.Scan() && p.active && serverActive {
 		p.m.Lock()
@@ -229,7 +229,7 @@ func disconnectAndRemoveClient(p *player) {
 func timeoutRoutine() {
 	for serverActive {
 		time.Sleep(timeOutMessagesSendTimeSecond)
-		tendedPlayersMutex.RLock()
+		//tendedPlayersMutex.RLock()
 		toRemove := make([]*player, 0, tendedPlayers.Len()/10)
 		ele := tendedPlayers.Front()
 		for ele != nil {
@@ -243,7 +243,7 @@ func timeoutRoutine() {
 			}
 			ele = ele.Next()
 		}
-		tendedPlayersMutex.RUnlock()
+		//tendedPlayersMutex.RUnlock()
 		fmt.Println("tended players read for timeout routine.")
 		//now for removal
 		for _, v := range toRemove {
