@@ -10,10 +10,14 @@ import (
 )
 
 type queueType int
+type gamePhase int
 
 const (
 	codeBased queueType = 0
 	free      queueType = 1
+
+	initializing gamePhase = 0
+	active       gamePhase = 1
 
 	timeOutMessagesSendTimeSecond time.Duration = time.Second * 5
 )
@@ -21,7 +25,6 @@ const (
 type player struct {
 	conn                    *net.Conn
 	name                    string
-	activeQueue             *queue
 	activeGame              *game
 	lastMsgRecieve          time.Time
 	active                  bool
@@ -33,13 +36,20 @@ type player struct {
 }
 
 type game struct {
-	musicName string
-	p1        player
-	p2        player
+	musicName       string
+	p1              *player
+	p2              *player
+	p1ready         bool
+	p2ready         bool
+	p1tempo         float32
+	p2tempo         float32
+	currentPhase    gamePhase
+	gameCommandChan chan *playerMessage
 }
 
-type queue struct {
-	qType queueType
+type playerMessage struct {
+	p   *player
+	msg string
 }
 
 var lastID int64 = 0
@@ -55,7 +65,7 @@ func main() {
 
 	serverActive = true
 
-	go gameServer()
+	go queueSystem()
 	go delegateChannels()
 	go timeoutRoutine()
 
@@ -80,7 +90,7 @@ func handleGameConnection(conn *net.Conn) {
 	}
 	//ok player is created and has connection
 	fmt.Fprint(*conn, "MD OK\n")
-	go tendToClientChannels(p, scanner)
+	go tendToClientChannels(p)
 	tendToClientRead(p, scanner)
 }
 
@@ -124,13 +134,43 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 		}
 		ln := scanner.Text()
 		fmt.Println(p.name + ": " + ln)
+
+		//check for game messages
 		p.lastMsgRecieve = time.Now()
+		gameChecked := "MD GAME"
+		if ln[:len(gameChecked)] == gameChecked {
+			//if starts with MD GAME:
+			if p.activeGame == nil {
+				fmt.Println("Recieved game message despite not being in-game from " + p.name + ": " + ln)
+				p.writeChannel <- &writeRequest{
+					message: "MD GAME-INVALID\n",
+				}
+				p.disconnectClientChannel <- struct{}{}
+				return
+			}
+			p.activeGame.gameCommandChan <- &playerMessage{
+				p:   p,
+				msg: ln,
+			}
+		}
+
+		//deal with non-game messages
 		switch ln {
 		case "MD CLOSE\n":
 			//handle this player being no more.
 			p.disconnectClientChannel <- struct{}{}
 		case "MD NO TIMEOUT\n":
 			break
+		case "MD ENQUEUE\n":
+			queuedPlayersChannel <- p
+			break
+		default:
+			fmt.Println("Recieved unknown message from " + p.name + ": " + ln)
+			p.writeChannel <- &writeRequest{
+				message: "MD INVALID\n",
+			}
+			p.disconnectClientChannel <- struct{}{}
+			return
 		}
 		p.m.Unlock()
 	}
@@ -139,7 +179,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 }
 
 //tendToClientChannels ensures that only one routine per client can tend to the players' channels, such as writing
-func tendToClientChannels(p *player, scanner *bufio.Scanner) {
+func tendToClientChannels(p *player) {
 	conn := *p.conn
 	for p.active && serverActive {
 		p.m.Lock()
@@ -164,11 +204,20 @@ func tendToClientChannels(p *player, scanner *bufio.Scanner) {
 func disconnectAndRemoveClient(p *player) {
 	//deal with all that is necessary here, such as removing from tended etc.
 
+	p.active = false
+
 	//remove from tended players
 	tendedPlayers[p.tendedPlayersIndex] = tendedPlayers[len(tendedPlayers)-1]
 	tendedPlayers[len(tendedPlayers)-1] = nil
 	tendedPlayers = tendedPlayers[:len(tendedPlayers)-1]
-	p.active = false
+
+	//deal with active games
+	if p.activeGame != nil {
+		p.activeGame.gameCommandChan <- &playerMessage{
+			p:   p,
+			msg: "MD INNER-PLAYER-DISCONNECT\n",
+		}
+	}
 }
 
 func timeoutRoutine() {

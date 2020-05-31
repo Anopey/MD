@@ -28,3 +28,9 @@ func parseUtilsAndSignal(text string, expectedLen int) ([]string, parseFlag) {
 
 	return fields, ok
 }
+
+func writeToPlayer(p *player, msg string) {
+	p.writeChannel <- &writeRequest{
+		message: msg,
+	}
+}
