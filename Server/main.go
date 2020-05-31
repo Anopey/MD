@@ -235,7 +235,8 @@ func timeoutRoutine() {
 		for ele != nil {
 			p := ele.Value.(*player)
 			if p.lastMsgRecieve.Add(timeOutMessagesSendTimeSecond * 3).Before(time.Now()) {
-				//toRemove = append(toRemove, p)
+				toRemove = append(toRemove, p)
+				ele = ele.Next()
 				continue
 			}
 			p.writeChannel <- &writeRequest{
