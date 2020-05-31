@@ -135,10 +135,11 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	for scanner.Scan() && p.active && serverActive {
 		ln := scanner.Text()
 		fmt.Println(p.name + ": " + ln)
-		p.m.Lock()
 		if !p.active {
 			return
 		}
+
+		p.m.Lock()
 
 		//check for game messages
 		p.lastMsgRecieve = time.Now()
@@ -151,6 +152,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 					message: "MD GAME-INVALID\n",
 				}
 				p.disconnectClientChannel <- struct{}{}
+				p.m.Unlock()
 				return
 			}
 			p.activeGame.gameCommandChan <- &playerMessage{
@@ -175,6 +177,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 				message: "MD INVALID\n",
 			}
 			p.disconnectClientChannel <- struct{}{}
+			p.m.Unlock()
 			return
 		}
 		p.m.Unlock()
@@ -192,7 +195,9 @@ func tendToClientChannels(p *player) {
 		}
 		select {
 		case w := <-p.writeChannel:
+			p.m.Lock()
 			fmt.Fprint(conn, w.message)
+			p.m.Unlock()
 			break
 		case <-p.disconnectClientChannel:
 			p.m.Lock()
@@ -201,7 +206,6 @@ func tendToClientChannels(p *player) {
 			disconnectAndRemoveClient(p)
 			conn.Close()
 			p.m.Unlock()
-
 			return
 		}
 	}
