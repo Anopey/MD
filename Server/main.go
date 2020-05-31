@@ -232,8 +232,8 @@ func disconnectAndRemoveClient(p *player) {
 	}
 
 	p.active = false
-	close(p.writeChannel)
-	close(p.disconnectClientChannel)
+	//close(p.writeChannel) DEAL WITH THESE ALSO FIND BETTER WAY TO DEBUG SERVER PLS
+	//close(p.disconnectClientChannel)
 	p = nil
 }
 
