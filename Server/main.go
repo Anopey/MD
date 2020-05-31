@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"container/list"
 	"fmt"
 	"log"
 	"net"
@@ -32,7 +33,7 @@ type player struct {
 	writeChannel            chan *writeRequest
 	disconnectClientChannel chan interface{}
 	m                       sync.RWMutex
-	tendedPlayersIndex      int
+	tendedPlayersElement    *list.Element
 }
 
 type game struct {
@@ -120,13 +121,16 @@ func handleInitialConnection(conn *net.Conn, scanner *bufio.Scanner) *player {
 	return &newPlayer
 }
 
-var tendedPlayers = make([]*player, 0, 50)
+var tendedPlayers *list.List = list.New()
+
+var tendedPlayersMutex sync.RWMutex = sync.RWMutex{}
 
 //tendToClientRead handles all the reading operations relating to a specific client
 func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	p.lastMsgRecieve = time.Now() //so no timeout occurs immediately
-	tendedPlayers = append(tendedPlayers, p)
-	p.tendedPlayersIndex = len(tendedPlayers) - 1
+	tendedPlayersMutex.Lock()
+	p.tendedPlayersElement = tendedPlayers.PushBack(p)
+	tendedPlayersMutex.Unlock()
 	for scanner.Scan() && p.active && serverActive {
 		p.m.Lock()
 		if !p.active {
@@ -207,9 +211,9 @@ func disconnectAndRemoveClient(p *player) {
 	p.active = false
 
 	//remove from tended players
-	tendedPlayers[p.tendedPlayersIndex] = tendedPlayers[len(tendedPlayers)-1]
-	tendedPlayers[len(tendedPlayers)-1] = nil
-	tendedPlayers = tendedPlayers[:len(tendedPlayers)-1]
+	tendedPlayersMutex.Lock()
+	tendedPlayers.Remove(p.tendedPlayersElement)
+	tendedPlayersMutex.Unlock()
 
 	//deal with active games
 	if p.activeGame != nil {
@@ -223,16 +227,20 @@ func disconnectAndRemoveClient(p *player) {
 func timeoutRoutine() {
 	for serverActive {
 		time.Sleep(timeOutMessagesSendTimeSecond)
-		toRemove := make([]*player, 0, len(tendedPlayers)/10)
-		for _, v := range tendedPlayers {
-			if v.lastMsgRecieve.Add(timeOutMessagesSendTimeSecond * 3).Before(time.Now()) {
-				toRemove = append(toRemove, v)
+		tendedPlayersMutex.RLock()
+		toRemove := make([]*player, 0, tendedPlayers.Len()/10)
+		ele := tendedPlayers.Front()
+		for ele != nil {
+			p := ele.Value.(*player)
+			if p.lastMsgRecieve.Add(timeOutMessagesSendTimeSecond * 3).Before(time.Now()) {
+				toRemove = append(toRemove, p)
 				continue
 			}
-			v.writeChannel <- &writeRequest{
+			p.writeChannel <- &writeRequest{
 				message: "MD NO TIMEOUT\n",
 			}
 		}
+		tendedPlayersMutex.RUnlock()
 
 		//now for removal
 		for _, v := range toRemove {

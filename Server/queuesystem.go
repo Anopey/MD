@@ -45,9 +45,11 @@ func handleQueuedPlayer(newPlayer *player) {
 
 	} else {
 		for newPlayer.activeGame == nil {
+			tendedPlayersMutex.RLock()
 			newPlayer.writeChannel <- &writeRequest{
-				message: "MD QUEUE " + strconv.Itoa(len(tendedPlayers)) + "\n",
+				message: "MD QUEUE " + strconv.Itoa(tendedPlayers.Len()) + "\n",
 			}
+			tendedPlayersMutex.RUnlock()
 			time.Sleep(queueMessageSendCooldown)
 		}
 	}
