@@ -36,13 +36,14 @@ func tendGameChannel(g *game) {
 			var inputVar float32 = 0
 			fields := strings.Fields(playerMessage.msg[:len(playerMessage.msg)-1])
 			if len(fields) == 4 {
-				println("SERVER RECIEVED FLOAT ARGUMENT FOR GAME: " + playerMessage.msg)
 				out, err := strconv.ParseFloat(fields[3], 32)
 				if err != nil {
 					log.Println("ERROR: GAME INPUT VARIABLE IS NOT PARSEABLE TO FLOAT32!")
 				}
 				inputVar = float32(out)
 				playerMessage.msg = fields[0] + " " + fields[1] + " " + fields[2]
+				println("RECIEVED FLOAT ARGUMENT FOR GAME: '" + playerMessage.msg + "' WITH VAL: " + fields[3])
+				println(inputVar)
 			}
 
 			//signals not followed by \n have input available to them ;)
