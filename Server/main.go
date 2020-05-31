@@ -235,7 +235,7 @@ func timeoutRoutine() {
 		for ele != nil {
 			p := ele.Value.(*player)
 			if p.lastMsgRecieve.Add(timeOutMessagesSendTimeSecond * 3).Before(time.Now()) {
-				toRemove = append(toRemove, p)
+				//toRemove = append(toRemove, p)
 				continue
 			}
 			p.writeChannel <- &writeRequest{
@@ -246,10 +246,9 @@ func timeoutRoutine() {
 		//tendedPlayersMutex.RUnlock()
 		fmt.Println("tended players read for timeout routine.")
 		//now for removal
-		//for _, v := range toRemove {
-		//	fmt.Println("sending timeout channel req to: " + v.name)
-		//	v.disconnectClientChannel <- struct{}{}
-		//}
+		for _, v := range toRemove {
+			v.disconnectClientChannel <- struct{}{}
+		}
 	}
 }
 
