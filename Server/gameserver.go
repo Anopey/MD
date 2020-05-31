@@ -35,18 +35,18 @@ func tendGameChannel(g *game) {
 		case playerMessage := <-g.gameCommandChan:
 			var inputVar float32 = 0
 			fields := strings.Fields(playerMessage.msg[:len(playerMessage.msg)-1])
-			if len(fields) == 3 {
-				out, err := strconv.ParseFloat(fields[2], 32)
+			if len(fields) == 4 {
+				out, err := strconv.ParseFloat(fields[3], 32)
 				if err != nil {
 					log.Println("ERROR: GAME INPUT VARIABLE IS NOT PARSEABLE TO FLOAT32!")
 				}
 				inputVar = float32(out)
-				playerMessage.msg = fields[0] + " " + fields[1]
+				playerMessage.msg = fields[0] + " " + fields[1] + " " + fields[2]
 			}
 
 			//signals not followed by \n have input available to them ;)
 			switch playerMessage.msg {
-			case "MD INNER-PLAYER-DISCONNECT\n":
+			case "MD GAME INNER-PLAYER-DISCONNECT\n":
 				if playerMessage.p == g.p1 {
 					writeToPlayer(g.p2, "MD GAME FDISCONNECT\n")
 				} else if playerMessage.p == g.p2 {
@@ -55,7 +55,7 @@ func tendGameChannel(g *game) {
 					fmt.Println("ERROR: NEITHER OF THE PLAYERS ARE EQUIVALENT TO THE OWNER OF THE FDISCONNECT MESSAGE SENT TO THIS GAME INSTANCE")
 				}
 				break
-			case "MD GAME-READY":
+			case "MD GAME READY":
 				if g.currentPhase != initializing {
 					fmt.Println("ERROR: A PLAYER HAS ATTEMPTED TO READY UP DESPITE THE GAME NOT BEING IN THE INITIALIZATION PHASE")
 					break

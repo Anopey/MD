@@ -215,7 +215,7 @@ func disconnectAndRemoveClient(p *player) {
 	if p.activeGame != nil {
 		p.activeGame.gameCommandChan <- &playerMessage{
 			p:   p,
-			msg: "MD INNER-PLAYER-DISCONNECT\n",
+			msg: "MD GAME INNER-PLAYER-DISCONNECT\n",
 		}
 	}
 }
