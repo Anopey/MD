@@ -133,12 +133,12 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	tendedPlayersMutex.Unlock()
 	fmt.Println("added to tended players: " + p.name)
 	for scanner.Scan() && p.active && serverActive {
+		ln := scanner.Text()
+		fmt.Println(p.name + ": " + ln)
 		p.m.Lock()
 		if !p.active {
 			return
 		}
-		ln := scanner.Text()
-		fmt.Println(p.name + ": " + ln)
 
 		//check for game messages
 		p.lastMsgRecieve = time.Now()

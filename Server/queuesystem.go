@@ -14,7 +14,7 @@ var queuedPlayersChannel = make(chan *player, 5)
 var queuedPlayers = make([]*player, 0, 2)
 
 func queueSystem() {
-	for {
+	for serverActive {
 		select {
 		case newPlayer := <-queuedPlayersChannel:
 			if newPlayer.activeGame != nil {
