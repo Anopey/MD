@@ -31,6 +31,27 @@ func queueSystem() {
 
 func handleQueuedPlayer(newPlayer *player) {
 	queuedPlayers = append(queuedPlayers, newPlayer)
+	flag := false
+	if len(queuedPlayers) >= 2 {
+		for {
+			flag = false
+
+			if len(queuedPlayers) > 1 && !queuedPlayers[0].active {
+				queuedPlayers = queuedPlayers[1:]
+				flag = true
+			}
+
+			if len(queuedPlayers) > 1 && !queuedPlayers[1].active {
+				queuedPlayers[1] = queuedPlayers[0]
+				queuedPlayers = queuedPlayers[1:]
+				flag = true
+			}
+
+			if !flag {
+				break
+			}
+		}
+	}
 	if len(queuedPlayers) >= 2 {
 		go initializeGameServer(queuedPlayers[0], queuedPlayers[1])
 
