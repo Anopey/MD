@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	queueMessageSendCooldown time.Duration = time.Second * 1
+	queueMessageSendCooldown time.Duration = time.Second * 2
 )
 
 var queuedPlayersChannel = make(chan *player, 5)
