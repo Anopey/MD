@@ -46,8 +46,6 @@ func tendGameChannel(g *game) {
 				}
 				inputVar = float32(out)
 				playerMessage.msg = fields[0] + " " + fields[1] + " " + fields[2]
-				println("RECIEVED FLOAT ARGUMENT FOR GAME: '" + playerMessage.msg + "' WITH VAL: " + fields[3])
-				println(inputVar)
 			}
 
 			//signals not followed by \n have input available to them ;)
@@ -97,7 +95,7 @@ func tendGameChannel(g *game) {
 
 func gameTempoProcess(g *game) {
 	fmt.Println("STARTING TEMPO PROCESS FOR " + g.p1.name + " and " + g.p2.name)
-
+	g.currentPhase = active
 	//THIS IS NOT NORMALLY GUD
 	tempo := g.p1tempo
 
