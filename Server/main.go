@@ -230,6 +230,11 @@ func disconnectAndRemoveClient(p *player) {
 			msg: "MD GAME INNER-PLAYER-DISCONNECT\n",
 		}
 	}
+
+	p.active = false
+	close(p.writeChannel)
+	close(p.disconnectClientChannel)
+	p = nil
 }
 
 func timeoutRoutine() {
