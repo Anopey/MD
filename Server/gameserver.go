@@ -107,6 +107,7 @@ func gameTempoProcess(g *game) {
 	time.Sleep(currentCool)
 	for g.currentPhase == active {
 		currentPos = 0.1 + rand.Float32()*(0.8)
+		fmt.Println(fmt.Sprintf("%f", g.p2Pos) + " " + fmt.Sprintf("%f", currentPos) + " " + fmt.Sprintf("%f", g.p1Pos))
 		g.p1.writeChannel <- &writeRequest{
 			message: "MD GAME-INDIC " + fmt.Sprintf("%f", currentPos) + "\n",
 		}
@@ -114,6 +115,7 @@ func gameTempoProcess(g *game) {
 			message: "MD GAME-OPP " + fmt.Sprintf("%f", g.p2Pos) + "\n",
 		}
 		time.Sleep(tempoPlay)
+		fmt.Println(fmt.Sprintf("%f", g.p2Pos) + " " + fmt.Sprintf("%f", currentPos) + " " + fmt.Sprintf("%f", g.p1Pos))
 		if (g.p1Pos < currentPos && g.p2Pos < currentPos) || (g.p1Pos > currentPos && g.p2Pos > currentPos) {
 			g.p1.writeChannel <- &writeRequest{
 				message: "MD GAME-FAIL\n",
@@ -134,6 +136,7 @@ func gameTempoProcess(g *game) {
 			message: "MD GAME-OPP " + fmt.Sprintf("%f", g.p1Pos) + "\n",
 		}
 		time.Sleep(tempoPlay)
+		fmt.Println(fmt.Sprintf("%f", g.p2Pos) + " " + fmt.Sprintf("%f", currentPos) + " " + fmt.Sprintf("%f", g.p1Pos))
 		if (g.p1Pos < currentPos && g.p2Pos < currentPos) || (g.p1Pos > currentPos && g.p2Pos > currentPos) {
 			g.p1.writeChannel <- &writeRequest{
 				message: "MD GAME-FAIL",

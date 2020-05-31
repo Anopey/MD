@@ -259,7 +259,6 @@ func timeoutRoutine() {
 			ele = ele.Next()
 		}
 		//tendedPlayersMutex.RUnlock()
-		fmt.Println("tended players read for timeout routine.")
 		//now for removal
 		for _, v := range toRemove {
 			v.disconnectClientChannel <- struct{}{}
