@@ -98,6 +98,7 @@ func gameTempoProcess(g *game) {
 	g.currentPhase = active
 	//THIS IS NOT NORMALLY GUD
 	tempo := g.p1tempo
+	fmt.Println("TEMPO IS: " + fmt.Sprintf("%f", tempo))
 
 	currentCool := time.Duration(time.Millisecond * time.Duration((int)(tempo/2)))
 	tempoPlay := time.Duration(time.Millisecond * time.Duration((int)(tempo)))
@@ -115,10 +116,10 @@ func gameTempoProcess(g *game) {
 		time.Sleep(tempoPlay)
 		if (g.p1Pos < currentPos && g.p2Pos < currentPos) || (g.p1Pos > currentPos && g.p2Pos > currentPos) {
 			g.p1.writeChannel <- &writeRequest{
-				message: "MD GAME-FAIL",
+				message: "MD GAME-FAIL\n",
 			}
 			g.p2.writeChannel <- &writeRequest{
-				message: "MD GAME-FAIL",
+				message: "MD GAME-FAIL\n",
 			}
 			g.p1.activeGame = nil
 			g.p2.activeGame = nil
