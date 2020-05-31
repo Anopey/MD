@@ -212,9 +212,9 @@ func disconnectAndRemoveClient(p *player) {
 	p.active = false
 
 	//remove from tended players
-	tendedPlayersMutex.Lock()
+	//tendedPlayersMutex.Lock()
 	tendedPlayers.Remove(p.tendedPlayersElement)
-	tendedPlayersMutex.Unlock()
+	//tendedPlayersMutex.Unlock()
 	fmt.Println("removed from tended players: " + p.name)
 
 	//deal with active games
