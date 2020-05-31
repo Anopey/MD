@@ -160,26 +160,27 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 				p:   p,
 				msg: ln,
 			}
-		}
+		} else {
 
-		//deal with non-game messages
-		switch ln {
-		case "MD CLOSE\n":
-			//handle this player being no more.
-			p.disconnectClientChannel <- struct{}{}
-		case "MD NO-TIMEOUT\n":
-			break
-		case "MD ENQUEUE\n":
-			queuedPlayersChannel <- p
-			break
-		default:
-			fmt.Println("Recieved unknown message from " + p.name + ": " + ln)
-			p.writeChannel <- &writeRequest{
-				message: "MD INVALID\n",
+			//deal with non-game messages
+			switch ln {
+			case "MD CLOSE\n":
+				//handle this player being no more.
+				p.disconnectClientChannel <- struct{}{}
+			case "MD NO-TIMEOUT\n":
+				break
+			case "MD ENQUEUE\n":
+				queuedPlayersChannel <- p
+				break
+			default:
+				fmt.Println("Recieved unknown message from " + p.name + ": " + ln)
+				p.writeChannel <- &writeRequest{
+					message: "MD INVALID\n",
+				}
+				p.disconnectClientChannel <- struct{}{}
+				p.m.Unlock()
+				return
 			}
-			p.disconnectClientChannel <- struct{}{}
-			p.m.Unlock()
-			return
 		}
 		p.m.Unlock()
 	}
