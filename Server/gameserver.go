@@ -93,6 +93,10 @@ func tendGameChannel(g *game) {
 	}
 }
 
+const (
+	displace float32 = 0.4
+)
+
 func gameTempoProcess(g *game) {
 	fmt.Println("STARTING TEMPO PROCESS FOR " + g.p1.name + " and " + g.p2.name)
 	g.currentPhase = active
@@ -105,14 +109,24 @@ func gameTempoProcess(g *game) {
 
 	var currentPos float32 = 0.5
 	time.Sleep(currentCool)
+	var randnumb float32
 	for g.currentPhase == active {
 		currentPos = 0.1 + rand.Float32()*(0.8)
+		randnumb = rand.Float32()
+		if randnumb >= 0.5 {
+			g.p1Pos = g.p1Pos + displace
+		} else {
+			g.p1Pos = g.p1Pos - displace
+		}
 		fmt.Println(fmt.Sprintf("%f", g.p2Pos) + " " + fmt.Sprintf("%f", currentPos) + " " + fmt.Sprintf("%f", g.p1Pos))
 		g.p1.writeChannel <- &writeRequest{
 			message: "MD GAME-INDIC " + fmt.Sprintf("%f", currentPos) + "\n",
 		}
 		g.p1.writeChannel <- &writeRequest{
 			message: "MD GAME-OPP " + fmt.Sprintf("%f", g.p2Pos) + "\n",
+		}
+		g.p1.writeChannel <- &writeRequest{
+			message: "MD GAME-LOC " + fmt.Sprintf("%f", g.p1Pos) + "\n",
 		}
 		time.Sleep(tempoPlay)
 		fmt.Println(fmt.Sprintf("%f", g.p2Pos) + " " + fmt.Sprintf("%f", currentPos) + " " + fmt.Sprintf("%f", g.p1Pos))
@@ -129,11 +143,19 @@ func gameTempoProcess(g *game) {
 			return
 		}
 		currentPos = 0.1 + rand.Float32()*(0.8)
+		if randnumb >= 0.5 {
+			g.p2Pos = g.p2Pos + displace
+		} else {
+			g.p2Pos = g.p2Pos - displace
+		}
 		g.p2.writeChannel <- &writeRequest{
 			message: "MD GAME-INDIC " + fmt.Sprintf("%f", currentPos) + "\n",
 		}
 		g.p2.writeChannel <- &writeRequest{
 			message: "MD GAME-OPP " + fmt.Sprintf("%f", g.p1Pos) + "\n",
+		}
+		g.p2.writeChannel <- &writeRequest{
+			message: "MD GAME-POS " + fmt.Sprintf("%f", g.p2Pos) + "\n",
 		}
 		time.Sleep(tempoPlay)
 		fmt.Println(fmt.Sprintf("%f", g.p2Pos) + " " + fmt.Sprintf("%f", currentPos) + " " + fmt.Sprintf("%f", g.p1Pos))
