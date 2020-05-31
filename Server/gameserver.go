@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var activeGames = make([]*game, 0, 50)
@@ -15,6 +17,8 @@ func initializeGameServer(p1, p2 *player) {
 		p2:              p2,
 		p1ready:         false,
 		p2ready:         false,
+		p1Pos:           0.0,
+		p2Pos:           0.0,
 		p1tempo:         0.0,
 		p2tempo:         0.0,
 		currentPhase:    initializing,
@@ -76,6 +80,15 @@ func tendGameChannel(g *game) {
 					go gameTempoProcess(g)
 					//left here
 				}
+			case "MD GAME POS":
+				if playerMessage.p == g.p1 {
+					g.p1Pos = inputVar
+				} else if playerMessage.p == g.p2 {
+					g.p2Pos = inputVar
+				} else {
+					fmt.Println("ERROR: NEITHER OF THE PLAYERS ARE EQUIVALENT TO THE OWNER OF THE READY MESSAGE SENT TO THIS GAME INSTANCE")
+				}
+				break
 			}
 			break
 		}
@@ -84,4 +97,55 @@ func tendGameChannel(g *game) {
 
 func gameTempoProcess(g *game) {
 	fmt.Println("STARTING TEMPO PROCESS FOR " + g.p1.name + " and " + g.p2.name)
+
+	//THIS IS NOT NORMALLY GUD
+	tempo := g.p1tempo
+
+	currentCool := time.Duration(time.Millisecond * time.Duration((int)(tempo/2)))
+	tempoPlay := time.Duration(time.Millisecond * time.Duration((int)(tempo)))
+
+	var currentPos float32 = 0.5
+	time.Sleep(currentCool)
+	for g.currentPhase == active {
+		currentPos = 0.1 + rand.Float32()*(0.8)
+		g.p1.writeChannel <- &writeRequest{
+			message: "MD GAME-INDIC " + fmt.Sprintf("%f", currentPos) + "\n",
+		}
+		g.p1.writeChannel <- &writeRequest{
+			message: "MD GAME-OPP " + fmt.Sprintf("%f", g.p2Pos) + "\n",
+		}
+		time.Sleep(tempoPlay)
+		if (g.p1Pos < currentPos && g.p2Pos < currentPos) || (g.p1Pos > currentPos && g.p2Pos > currentPos) {
+			g.p1.writeChannel <- &writeRequest{
+				message: "MD GAME-FAIL",
+			}
+			g.p2.writeChannel <- &writeRequest{
+				message: "MD GAME-FAIL",
+			}
+			g.p1.activeGame = nil
+			g.p2.activeGame = nil
+			g.currentPhase = 3
+			return
+		}
+		currentPos = 0.1 + rand.Float32()*(0.8)
+		g.p2.writeChannel <- &writeRequest{
+			message: "MD GAME-INDIC " + fmt.Sprintf("%f", currentPos) + "\n",
+		}
+		g.p2.writeChannel <- &writeRequest{
+			message: "MD GAME-OPP " + fmt.Sprintf("%f", g.p1Pos) + "\n",
+		}
+		time.Sleep(tempoPlay)
+		if (g.p1Pos < currentPos && g.p2Pos < currentPos) || (g.p1Pos > currentPos && g.p2Pos > currentPos) {
+			g.p1.writeChannel <- &writeRequest{
+				message: "MD GAME-FAIL",
+			}
+			g.p2.writeChannel <- &writeRequest{
+				message: "MD GAME-FAIL",
+			}
+			g.p1.activeGame = nil
+			g.p2.activeGame = nil
+			g.currentPhase = 3
+			return
+		}
+	}
 }

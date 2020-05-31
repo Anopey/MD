@@ -44,6 +44,8 @@ type game struct {
 	p2ready         bool
 	p1tempo         float32
 	p2tempo         float32
+	p1Pos           float32
+	p2Pos           float32
 	currentPhase    gamePhase
 	gameCommandChan chan *playerMessage
 }
