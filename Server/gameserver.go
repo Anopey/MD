@@ -36,6 +36,7 @@ func tendGameChannel(g *game) {
 			var inputVar float32 = 0
 			fields := strings.Fields(playerMessage.msg[:len(playerMessage.msg)-1])
 			if len(fields) == 4 {
+				println("SERVER RECIEVED FLOAT ARGUMENT FOR GAME: " + playerMessage.msg)
 				out, err := strconv.ParseFloat(fields[3], 32)
 				if err != nil {
 					log.Println("ERROR: GAME INPUT VARIABLE IS NOT PARSEABLE TO FLOAT32!")
