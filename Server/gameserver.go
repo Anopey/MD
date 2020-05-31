@@ -23,8 +23,8 @@ func initializeGameServer(p1, p2 *player) {
 	p1.activeGame = &gameInstance
 	p2.activeGame = &gameInstance
 
-	writeToPlayer(p1, "MD GAME-INIT\n")
-	writeToPlayer(p2, "MD GAME-INIT\n")
+	writeToPlayer(p1, "MD GAME-INIT "+"~"+p2.name+"\n")
+	writeToPlayer(p2, "MD GAME-INIT "+"~"+p1.name+"\n")
 
 	tendGameChannel(&gameInstance)
 }
