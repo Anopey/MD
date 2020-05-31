@@ -167,7 +167,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 		case "MD CLOSE\n":
 			//handle this player being no more.
 			p.disconnectClientChannel <- struct{}{}
-		case "MD NO TIMEOUT\n":
+		case "MD NO-TIMEOUT\n":
 			break
 		case "MD ENQUEUE\n":
 			queuedPlayersChannel <- p
@@ -251,7 +251,7 @@ func timeoutRoutine() {
 				continue
 			}
 			p.writeChannel <- &writeRequest{
-				message: "MD NO TIMEOUT\n",
+				message: "MD NO-TIMEOUT\n",
 			}
 			ele = ele.Next()
 		}
