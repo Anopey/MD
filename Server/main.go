@@ -135,6 +135,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	for scanner.Scan() && p.active && serverActive {
 		ln := scanner.Text()
 		fmt.Println(p.name + ": " + ln)
+		ln = ln + "\n"
 		if !p.active {
 			return
 		}
