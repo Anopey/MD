@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -50,6 +51,7 @@ func handleQueuedPlayer(newPlayer *player) {
 				message: "MD QUEUE " + strconv.Itoa(tendedPlayers.Len()) + "\n",
 			}
 			tendedPlayersMutex.RUnlock()
+			fmt.Println("tended players read for sending queue data to: " + newPlayer.name)
 			time.Sleep(queueMessageSendCooldown)
 		}
 	}

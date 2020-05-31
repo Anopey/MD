@@ -131,6 +131,7 @@ func tendToClientRead(p *player, scanner *bufio.Scanner) {
 	tendedPlayersMutex.Lock()
 	p.tendedPlayersElement = tendedPlayers.PushBack(p)
 	tendedPlayersMutex.Unlock()
+	fmt.Println("added to tended players: " + p.name)
 	for scanner.Scan() && p.active && serverActive {
 		p.m.Lock()
 		if !p.active {
@@ -214,6 +215,7 @@ func disconnectAndRemoveClient(p *player) {
 	tendedPlayersMutex.Lock()
 	tendedPlayers.Remove(p.tendedPlayersElement)
 	tendedPlayersMutex.Unlock()
+	fmt.Println("removed from tended players: " + p.name)
 
 	//deal with active games
 	if p.activeGame != nil {
@@ -242,7 +244,7 @@ func timeoutRoutine() {
 			ele = ele.Next()
 		}
 		tendedPlayersMutex.RUnlock()
-
+		fmt.Println("tended players read for timeout routine.")
 		//now for removal
 		for _, v := range toRemove {
 			v.disconnectClientChannel <- struct{}{}
